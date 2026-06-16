@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件迅传</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            text-align: center;
+            padding: 40px;
+        }
+
+        h1 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .upload-area {
+            background: white;
+            border-radius: 20px;
+            padding: 60px 80px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .upload-area:hover {
+            transform: translateY(-5px);
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 20px 60px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .upload-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5);
+        }
+
+        .upload-btn:active {
+            transform: scale(0.98);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .legal-notice {
+            margin-top: 40px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+            max-width: 700px;
+            line-height: 1.8;
+            text-align: left;
+        }
+
+        .legal-notice strong {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result p {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .download-link {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .download-link:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+
+        .copy-btn {
+            margin-left: 10px;
+            padding: 12px 20px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #1976D2;
+        }
+
+        .copy-btn.copied {
+            background: #4CAF50;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar.show {
+            display: block;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .error {
+            color: #ff4444;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>文件迅传</h1>
+
+        <div class="upload-area">
+            <input type="file" id="fileInput">
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                上传文件
+            </button>
+
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="result" id="result">
+            <p>文件上传成功！下载链接：</p>
+            <div>
+                <a href="#" class="download-link" id="downloadLink" target="_blank">下载文件</a>
+                <button class="copy-btn" id="copyBtn" onclick="copyLink()">复制链接</button>
+            </div>
+        </div>
+
+        <div class="legal-notice">
+            <strong>法律声明</strong>
+            请遵守《中华人民共和国网络安全法》及相关法律法规，严禁上传、存储、传播以下内容：
+            <br>• 危害国家安全、泄露国家秘密的内容
+            <br>• 暴力恐怖、淫秽色情内容
+            <br>• 侵犯他人知识产权的内容
+            <br>• 计算机病毒、木马等恶意程序
+            <br>• 其他法律法规禁止的内容
+            <br><br>
+            上传者需对上传内容承担法律责任，本平台仅提供技术服务。
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const result = document.getElementById('result');
+        const downloadLink = document.getElementById('downloadLink');
+        const copyBtn = document.getElementById('copyBtn');
+
+        let currentDownloadUrl = '';
+
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                uploadFile(e.target.files[0]);
+            }
+        });
+
+        async function uploadFile(file) {
+            // 重置状态
+            result.classList.remove('show');
+            progressBar.classList.add('show');
+            progressFill.style.width = '0%';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const xhr = new XMLHttpRequest();
+
+                // 监听上传进度
+                xhr.upload.addEventListener('progress', function(e) {
+                    if (e.lengthComputable) {
+                        const percentComplete = (e.loaded / e.total) * 100;
+                        progressFill.style.width = percentComplete + '%';
+                    }
+                });
+
+                xhr.addEventListener('load', function() {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+                        showResult(response);
+                    } else {
+                        showError('上传失败：' + xhr.statusText);
+                    }
+                });
+
+                xhr.addEventListener('error', function() {
+                    showError('网络错误，请重试');
+                });
+
+                xhr.open('POST', '/upload');
+                xhr.send(formData);
+
+            } catch (error) {
+                showError('上传失败：' + error.message);
+            }
+        }
+
+        function showResult(data) {
+            progressBar.classList.remove('show');
+            currentDownloadUrl = window.location.origin + data.downloadUrl;
+            downloadLink.href = currentDownloadUrl;
+            downloadLink.textContent = data.fileName;
+            result.classList.add('show');
+
+            // 清空文件输入
+            fileInput.value = '';
+        }
+
+        function showError(message) {
+            progressBar.classList.remove('show');
+            result.innerHTML = '<p class="error">' + message + '</p>';
+            result.classList.add('show');
+        }
+
+        function copyLink() {
+            navigator.clipboard.writeText(currentDownloadUrl).then(function() {
+                copyBtn.textContent = '已复制！';
+                copyBtn.classList.add('copied');
+                setTimeout(function() {
+                    copyBtn.textContent = '复制链接';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            }).catch(function() {
+                alert('复制失败，请手动复制');
+            });
+        }
+    </script>
+</body>
+</html>

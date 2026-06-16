@@ -1,0 +1,11 @@
+{
+  "admin": {
+    "username": "admin",
+    "password": "admin123",
+    "path": "/system-mgmt-2024"
+  },
+  "server": {
+    "port": 3000,
+    "maxFileSize": 10737418240
+  }
+}
