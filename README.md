@@ -113,6 +113,12 @@ Response:
 }
 ```
 
+### 截图
+<img width="1228" height="736" alt="ScreenShot_2026-06-16_173933_363" src="https://github.com/user-attachments/assets/4658057d-ac27-42ca-bbfa-cae8580593db" />
+<img width="992" height="805" alt="ScreenShot_2026-06-16_173852_385" src="https://github.com/user-attachments/assets/44bb40a9-2004-400c-becd-6f2686b84edd" />
+<img width="970" height="713" alt="ScreenShot_2026-06-16_173832_765" src="https://github.com/user-attachments/assets/9aff425c-2805-4783-aa6e-3bb527feabe3" />
+
+
 ## 法律声明
 
 请遵守《中华人民共和国网络安全法》及相关法律法规，严禁上传、存储、传播以下内容：
