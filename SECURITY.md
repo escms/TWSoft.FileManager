@@ -4,13 +4,13 @@
 
 ### 问题：直接访问 uploads/文件名 会不会被执行？
 
-**答案：不会执行，但已被阻止。**
+**答案：不会执行，且已被阻止。**
 
 ### 详细解释
 
 1. **文件存储机制**
    - 所有上传的文件都被重命名为UUID格式（如：`9407071e4e6b475e81fb617f3f20245f.exe`）
-   - 原始文件名仅保存在元数据中，下载时恢复
+   - 原始文件名仅保存在数据库中，下载时恢复
    - 攻击者无法猜测文件的实际存储名称
 
 2. **Express静态文件配置**
@@ -23,13 +23,13 @@
    ```javascript
    // 强制下载头
    Content-Disposition: attachment; filename="..."
-   
+
    // 统一使用二进制流类型
    Content-Type: application/octet-stream
-   
+
    // 禁止MIME类型嗅探
    X-Content-Type-Options: nosniff
-   
+
    // 禁止缓存
    Cache-Control: no-cache
    ```
@@ -79,14 +79,14 @@
    - 已在 `config.json` 中配置（默认10GB）
    - 可根据实际需求调整
 
-## 配置文件说明
+## 配置文件安全
 
 ### config.json
 ```json
 {
   "admin": {
     "username": "admin",      // 管理员用户名
-    "password": "admin123"    // 管理员密码（请修改！）
+    "password": "@admin123"   // 管理员密码（请修改！）
   },
   "server": {
     "port": 3000,                        // 服务器端口
@@ -98,6 +98,14 @@
 **重要提示**：
 - 首次使用前请修改管理员密码！
 - `maxFileSize` 单位为字节，10GB = 10737418240
+- 管理路径可自定义，建议使用隐蔽路径
+
+## 会话安全
+
+系统使用 express-session 进行会话管理：
+- Session ID 存储在 cookie 中
+- 默认有效期 24 小时
+- 生产环境建议配置 HTTPS 和安全的 session secret
 
 ## 总结
 
@@ -107,5 +115,6 @@
 3. 下载时强制设置安全响应头
 4. 所有文件以二进制流方式传输
 5. 后台管理需要登录认证
+6. 支持中文文件名编码处理
 
 **即使是恶意文件（病毒、木马等），也只能被下载，不会被执行。**

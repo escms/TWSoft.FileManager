@@ -4,8 +4,13 @@ node_modules/
 # 上传文件
 uploads/
 
-# 元数据
-metadata.json
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 元数据备份
+metadata.json.bak
 
 # 日志
 *.log
@@ -36,5 +41,13 @@ nul
 *.tmp
 *.temp
 
-# 发布包（可选，如果需要单独管理可以注释掉）
-# dist/
+# 发布包（不在版本控制中）
+dist/
+
+# 测试文件
+test_*.txt
+测试文件.txt
+
+# 启动脚本（如果与项目无关）
+start.bat
+start.sh

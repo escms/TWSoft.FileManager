@@ -20,7 +20,7 @@
 - Windows 10/11 Professional（测试环境）
 
 ### 软件要求
-- Node.js 14.x 或更高版本
+- Node.js 16.x 或更高版本
 - Nginx for Windows 1.20.x 或更高版本
 - Git（可选，用于代码管理）
 
@@ -135,7 +135,7 @@ C:\www\filemanager\
 │   ├── admin.html
 │   └── login.html
 ├── uploads\          (运行时自动创建)
-└── metadata.json     (运行时自动创建)
+└── files.db          (运行时自动创建)
 ```
 
 ### 3.2 安装依赖
@@ -636,8 +636,8 @@ set DATE=%date:~0,4%%date:~5,2%%date:~8,2%_%time:~0,2%%time:~3,2%%time:~6,2%
 
 mkdir %BACKUP_DIR%
 
-# 备份元数据
-copy C:\www\filemanager\metadata.json %BACKUP_DIR%\metadata_%DATE%.json
+# 备份数据库
+copy C:\www\filemanager\files.db %BACKUP_DIR%\files_%DATE%.db
 
 # 备份配置文件
 copy C:\www\filemanager\config.json %BACKUP_DIR%\config_%DATE%.json
@@ -727,7 +727,7 @@ type C:\nginx\logs\error.log
 
 **解决**：
 1. 检查 `uploads` 目录权限
-2. 检查 `metadata.json` 是否存在且可写
+2. 检查 `files.db` 是否存在且可写
 3. 查看应用日志
 
 ### Q5: Session 丢失频繁
@@ -750,10 +750,10 @@ app.use(session({
 
 ### Q6: 中文文件名乱码
 
-**问题**：下载的文件名显示乱码
+**问题**：上传的文件名显示乱码
 
 **解决**：
-已在代码中使用 `encodeURIComponent` 处理，确保浏览器支持 UTF-8。
+v1.1.0 已完美解决中文文件名编码问题，支持 GBK 和 UTF-8 自动识别。
 
 ### Q7: 如何更改端口
 
@@ -802,7 +802,7 @@ powershell -Command "Get-Content C:\nginx\logs\access.log -Wait -Tail 50"
 
 **解决**：
 1. 清理旧文件（通过后台管理界面）
-2. 设置自动清理脚本
+2. 启用自动清理功能（config.json 中配置）
 3. 扩展磁盘空间
 4. 考虑使用对象存储（如阿里云OSS、腾讯云COS）
 
@@ -911,4 +911,4 @@ module.exports = {
 
 ---
 
-**最后更新时间**: 2024年6月
+**最后更新时间**: 2026年6月

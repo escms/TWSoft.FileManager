@@ -1,64 +1,81 @@
-# 简易网盘系统
+# 文件迅传 (TWSoft.FileManager) v1.1.0
 
-一个无需注册和登录的简易文件上传下载系统。
+一个简洁高效的文件上传下载系统，支持中文文件名、短链接分享、IP追踪和后台管理。
 
 ## 功能特点
 
-- 首页简洁，只有上传按钮和法律提示
-- 上传后自动生成唯一下载链接
-- 所有文件强制下载（禁止浏览器直接执行）
-- 独立的后台管理页面
-- 文件大小限制：10GB（可配置）
-- 使用UUID生成唯一文件名，防止文件名冲突和安全问题
+- **简洁界面**：首页只有上传按钮和法律提示，打开即用
+- **智能上传**：自动处理文件名冲突，支持最大10GB文件上传（可配置）
+- **中文支持**：完美支持中文文件名，GBK/UTF-8自动识别无乱码
+- **短链接分享**：自动生成6位短ID下载链接（如 `/d/abc123`）
+- **IP追踪**：自动记录文件上传者IP地址
+- **下载统计**：实时统计下载次数和最后下载时间
+- **安全下载**：所有文件强制下载模式，禁止浏览器直接执行
+- **后台管理**：独立的隐蔽管理页面，支持文件列表、下载、删除和统计查看
+- **自动清理**：可配置过期文件自动清理（默认15天）
+- **数据持久化**：使用SQLite数据库存储文件元数据
 
-## 安全特性
+## 技术栈
 
-1. **强制下载**：所有文件下载时设置 `Content-Disposition: attachment`，浏览器会直接下载而不是执行
-2. **Content-Type保护**：统一使用 `application/octet-stream`，防止恶意脚本执行
-3. **X-Content-Type-Options: nosniff**：防止浏览器进行MIME类型嗅探
-4. **随机文件名**：使用UUID重命名存储的文件，原始文件名仅在下载时恢复
-5. **无执行权限**：上传目录不设置执行权限
+- **后端框架**：Express.js 5.x
+- **文件上传**：connect-busboy（支持多编码格式）
+- **字符编码**：iconv-lite（GBK/UTF-8自动转换）
+- **数据库**：SQLite (better-sqlite3)
+- **会话管理**：express-session
+- **前端**：原生HTML/CSS/JavaScript
 
 ## 安装和运行
 
 ### 前置要求
 
-- Node.js (推荐 v14+)
+- Node.js 16.x 或更高版本
 - npm
 
 ### 安装步骤
 
 ```bash
+# 克隆或下载项目
+cd TWSoft.FileManager
+
 # 安装依赖
-npm install
+npm install --production
 
 # 启动服务器
 npm start
 ```
 
-服务器将在 http://localhost:3000 启动
+服务器将在 `http://localhost:3000` 启动
 
 ## 使用说明
 
-### 首页
-访问 http://localhost:3000
-- 点击"上传文件"按钮选择文件
-- 上传成功后会显示下载链接
-- 可以一键复制链接分享
+### 用户端
 
-### 后台管理
-访问 http://localhost:3000/system-mgmt-2024
-- 需要登录（默认用户名：admin，密码：@admin123）
-- 查看所有已上传的文件列表
-- 查看文件大小和上传时间
-- 下载或复制文件链接
+访问 `http://localhost:3000`
+
+1. 点击"上传文件"按钮选择文件
+2. 上传成功后显示下载链接和短链接
+3. 复制链接即可分享给他人
+
+### 管理端
+
+访问 `http://localhost:3000/system-mgmt-2024`
+
+**默认账号**：
+- 用户名：`admin`
+- 密码：`@admin123`
+
+**功能**：
+- 查看所有已上传文件列表
+- 查看文件大小、上传时间、上传IP地址
+- 实时下载次数统计和最后下载时间
+- 下载文件或复制下载链接
 - 删除不需要的文件
-
-**注意**：管理路径已改为隐蔽路径 `/system-mgmt-2024`，提高安全性。
+- 总览统计：文件总数、总大小、总下载次数
 
 ## API接口
 
 ### 上传文件
+
 ```
 POST /upload
 Content-Type: multipart/form-data
@@ -69,16 +86,18 @@ Request Body:
 Response:
 {
   "success": true,
-  "fileId": "文件ID",
+  "fileId": "完整文件ID",
+  "shortId": "6位短ID",
   "fileName": "原始文件名",
-  "downloadUrl": "/download/文件ID",
-  "fullUrl": "完整下载链接"
+  "downloadUrl": "/d/短ID",
+  "fullUrl": "http://localhost:3000/d/短ID"
 }
 ```
 
-### 下载文件
+### 下载文件（短链接）
+
 ```
-GET /download/:fileId
+GET /d/:shortId
 
 响应头包含：
 - Content-Disposition: attachment; filename="原始文件名"
@@ -86,7 +105,14 @@ GET /download/:fileId
 - X-Content-Type-Options: nosniff
 ```
 
-### 获取文件列表
+### 下载文件（完整链接）
+
+```
+GET /download/:fileId
+```
+
+### 获取文件列表（需登录）
+
 ```
 GET /api/files
 
@@ -96,13 +122,17 @@ Response:
     "id": "文件ID",
     "originalName": "原始文件名",
     "size": 文件大小(字节),
-    "uploadTime": "上传时间(ISO格式)",
-    "downloadUrl": "/download/文件ID"
+    "uploadTime": "上传时间",
+    "downloadCount": 下载次数,
+    "lastDownload": "最后下载时间",
+    "uploadIP": "上传者IP地址",
+    "downloadUrl": "/d/短ID"
   }
 ]
 ```
 
-### 删除文件
+### 删除文件（需登录）
+
 ```
 DELETE /api/files/:fileId
 
@@ -118,6 +148,41 @@ Response:
 <img width="992" height="805" alt="ScreenShot_2026-06-16_173852_385" src="https://github.com/user-attachments/assets/44bb40a9-2004-400c-becd-6f2686b84edd" />
 <img width="970" height="713" alt="ScreenShot_2026-06-16_173832_765" src="https://github.com/user-attachments/assets/9aff425c-2805-4783-aa6e-3bb527feabe3" />
 
+## 配置文件
+
+编辑 `config.json`：
+
+```json
+{
+  "admin": {
+    "username": "admin",              // 管理员用户名
+    "password": "@admin123",          // 管理员密码（请修改！）
+    "path": "/system-mgmt-2024"       // 管理路径（可自定义）
+  },
+  "server": {
+    "port": 3000,                     // 服务器端口
+    "maxFileSize": 10737418240        // 最大文件大小（字节），默认10GB
+  },
+  "download": {
+    "shortPath": true,                // 启用短链接
+    "prefix": "/d"                    // 短链接前缀
+  },
+  "cleanup": {
+    "enabled": true,                  // 启用自动清理
+    "days": 15,                       // 保留天数
+    "interval": 3600000               // 检查间隔（毫秒），默认1小时
+  }
+}
+```
+
+## 安全特性
+
+1. **强制下载**：所有文件设置 `Content-Disposition: attachment`，防止浏览器执行
+2. **Content-Type保护**：统一使用 `application/octet-stream`
+3. **防嗅探**：设置 `X-Content-Type-Options: nosniff`
+4. **UUID文件名**：存储时使用UUID重命名，原始文件名仅在下载时恢复
+5. **隐蔽管理路径**：管理路径可自定义，提高安全性
+6. **会话认证**：后台管理需要登录认证
 
 ## 法律声明
 
@@ -130,18 +195,34 @@ Response:
 
 上传者需对上传内容承担法律责任，本平台仅提供技术服务。
 
-## 技术栈
-
-- **后端框架**: Express.js
-- **文件上传**: Multer
-- **文件ID生成**: UUID
-- **前端**: 原生HTML/CSS/JavaScript
-
 ## 注意事项
 
 1. 文件存储在本地 `uploads` 目录
-2. 文件元数据存储在 `metadata.json`
-3. 单个文件最大10GB（可在 config.json 中配置）
-4. 建议在生产环境配置HTTPS
-5. 如需长期运行，建议定期清理过期文件
-6. 后台管理路径已改为 `/system-mgmt-2024`，请在配置文件中修改默认密码
+2. 元数据存储在 SQLite 数据库 (`files.db`)
+3. 建议生产环境配置HTTPS
+4. 首次使用请修改默认密码
+5. 定期备份重要文件和数据
+6. 监控磁盘空间使用情况
+
+## 更新日志
+
+### v1.1.0 (2026-06-17)
+
+**新增功能**：
+- ✅ IP追踪：自动记录文件上传者IP地址（支持代理环境）
+- ✅ 下载统计：实时统计下载次数和最后下载时间
+- ✅ 后台增强：显示上传IP、下载次数、最后下载时间
+- ✅ 总览面板：文件总数、总大小、总下载次数统计
+
+**优化改进**：
+- ✅ 完善中文文件名编码支持（GBK/UTF-8自动识别）
+- ✅ 修复文件大小显示问题（等待异步写入完成）
+- ✅ 增强编码兼容性，支持多种编码场景
+- ✅ 数据库结构升级（添加 upload_ip 字段）
+
+### v1.0.0 (2024-06-16)
+- 初始版本发布
+- 基础文件上传下载功能
+- 后台管理功能
+- 短链接分享
+- 自动清理机制
