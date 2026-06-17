@@ -1,12 +1,11 @@
 # 文件迅传 (TWSoft.FileManager) v1.1.0
 
-一个简洁高效的文件上传下载系统，支持中文文件名、短链接分享、IP追踪和后台管理。
+一个简洁高效的文件上传下载系统，短链接分享、IP追踪和后台管理。
 
 ## 功能特点
 
 - **简洁界面**：首页只有上传按钮和法律提示，打开即用
 - **智能上传**：自动处理文件名冲突，支持最大10GB文件上传（可配置）
-- **中文支持**：完美支持中文文件名，GBK/UTF-8自动识别无乱码
 - **短链接分享**：自动生成6位短ID下载链接（如 `/d/abc123`）
 - **IP追踪**：自动记录文件上传者IP地址
 - **下载统计**：实时统计下载次数和最后下载时间
@@ -18,8 +17,7 @@
 ## 技术栈
 
 - **后端框架**：Express.js 5.x
-- **文件上传**：connect-busboy（支持多编码格式）
-- **字符编码**：iconv-lite（GBK/UTF-8自动转换）
+- **文件上传**：connect-busboy
 - **数据库**：SQLite (better-sqlite3)
 - **会话管理**：express-session
 - **前端**：原生HTML/CSS/JavaScript
@@ -144,9 +142,9 @@ Response:
 ```
 
 ### 截图
-<img width="1228" height="736" alt="ScreenShot_2026-06-16_173933_363" src="https://github.com/user-attachments/assets/4658057d-ac27-42ca-bbfa-cae8580593db" />
-<img width="992" height="805" alt="ScreenShot_2026-06-16_173852_385" src="https://github.com/user-attachments/assets/44bb40a9-2004-400c-becd-6f2686b84edd" />
-<img width="970" height="713" alt="ScreenShot_2026-06-16_173832_765" src="https://github.com/user-attachments/assets/9aff425c-2805-4783-aa6e-3bb527feabe3" />
+<img width="1279" height="805" alt="ScreenShot_2026-06-17_131941_431" src="https://github.com/user-attachments/assets/5a9d68b0-ccfb-4c63-80a1-dfe9eb00fc13" />
+<img width="1057" height="915" alt="ScreenShot_2026-06-17_131921_273" src="https://github.com/user-attachments/assets/a623fd4f-8941-448b-9f05-38e5ae3aa44a" />
+
 
 ## 配置文件
 
