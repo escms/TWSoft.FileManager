@@ -1,4 +1,4 @@
-# 文件迅传 (TWSoft.FileManager) v1.1.0
+# 文件迅传 (TWSoft.FileManager) v1.2.0
 
 一个简洁高效的文件上传下载系统，短链接分享、IP追踪和后台管理。
 
@@ -56,11 +56,11 @@ npm start
 
 ### 管理端
 
-访问 `http://localhost:3000/system-mgmt-2024`
+首次启动后，系统会在控制台输出随机生成的管理路径。
 
-**默认账号**：
+**默认账号**（请在 config.json 中修改）：
 - 用户名：`admin`
-- 密码：`@admin123`
+- 密码：首次启动时请修改 config.json 中的密码
 
 **功能**：
 - 查看所有已上传文件列表
@@ -69,6 +69,11 @@ npm start
 - 下载文件或复制下载链接
 - 删除不需要的文件
 - 总览统计：文件总数、总大小、总下载次数
+
+**安全提示**：
+- ⚠️ 首次使用请立即修改 config.json 中的管理员密码
+- 💡 支持通过环境变量 `ADMIN_PASSWORD` 设置密码
+- 🔒 管理路径在首次启动时会随机生成
 
 ## API接口
 
@@ -153,9 +158,9 @@ Response:
 ```json
 {
   "admin": {
-    "username": "admin",              // 管理员用户名
-    "password": "@admin123",          // 管理员密码（请修改！）
-    "path": "/system-mgmt-2024"       // 管理路径（可自定义）
+    "username": "admin",              // 管理员用户名（建议修改）
+    "password": "CHANGE_ME_PLEASE",   // ⚠️ 请立即修改此密码！
+    "path": "/admin-panel"            // 管理路径（首次启动会自动生成随机路径）
   },
   "server": {
     "port": 3000,                     // 服务器端口
@@ -173,14 +178,43 @@ Response:
 }
 ```
 
+### 环境变量配置（推荐）
+
+为了安全起见，推荐使用环境变量配置敏感信息：
+
+```bash
+# Linux/Mac
+export ADMIN_USERNAME="your_username"
+export ADMIN_PASSWORD="your_secure_password"
+export ADMIN_PATH="/your_custom_path"
+
+# Windows
+set ADMIN_USERNAME=your_username
+set ADMIN_PASSWORD=your_secure_password
+set ADMIN_PATH=/your_custom_path
+
+# 然后启动
+npm start
+```
+
+或在 `.env` 文件中配置（需要安装 dotenv）：
+
+```env
+ADMIN_USERNAME=your_username
+ADMIN_PASSWORD=your_secure_password
+ADMIN_PATH=/your_custom_path
+```
+
 ## 安全特性
 
 1. **强制下载**：所有文件设置 `Content-Disposition: attachment`，防止浏览器执行
 2. **Content-Type保护**：统一使用 `application/octet-stream`
 3. **防嗅探**：设置 `X-Content-Type-Options: nosniff`
 4. **UUID文件名**：存储时使用UUID重命名，原始文件名仅在下载时恢复
-5. **隐蔽管理路径**：管理路径可自定义，提高安全性
-6. **会话认证**：后台管理需要登录认证
+5. **随机管理路径**：首次启动自动生成随机管理路径
+6. **环境变量支持**：支持通过环境变量覆盖敏感配置
+7. **会话认证**：后台管理需要登录认证
+8. **密码安全提醒**：检测到默认密码时会发出警告
 
 ## 法律声明
 
@@ -203,6 +237,15 @@ Response:
 6. 监控磁盘空间使用情况
 
 ## 更新日志
+
+### v1.2.0 (2026-06-19)
+
+**安全增强**：
+- 🔒 移除默认密码，使用占位符提醒用户修改
+- 🎲 首次启动自动生成随机管理路径
+- 🔐 支持环境变量配置敏感信息（ADMIN_USERNAME、ADMIN_PASSWORD、ADMIN_PATH）
+- ⚠️ 检测到默认密码时发出安全警告
+- 📝 提供 config.example.json 示例配置文件
 
 ### v1.1.0 (2026-06-17)
 

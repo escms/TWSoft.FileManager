@@ -1,8 +1,8 @@
 {
   "admin": {
-    "username": "admin",
-    "password": "CHANGE_ME_PLEASE",
-    "path": "/admin-panel"
+    "username": "YOUR_ADMIN_USERNAME",
+    "password": "YOUR_SECURE_PASSWORD",
+    "path": "/YOUR_CUSTOM_ADMIN_PATH"
   },
   "server": {
     "port": 3000,

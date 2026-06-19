@@ -1,6 +1,6 @@
 {
   "name": "twsoft.filemanager",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "文件迅传 - 基于SQLite的增强版文件上传下载系统",
   "main": "index.js",
   "scripts": {

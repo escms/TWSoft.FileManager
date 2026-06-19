@@ -64,7 +64,35 @@ function decodeFilename(encodedName) {
 const app = express();
 
 // 加载配置文件
-const config = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf-8'));
+const configPath = path.join(__dirname, 'config.json');
+const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
+// 安全检查：首次启动时生成随机管理路径
+if (config.admin.path === '/admin-panel' || !config.admin.path) {
+    const randomPath = '/' + Math.random().toString(36).substring(2, 15);
+    config.admin.path = randomPath;
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
+    console.log('[Security] Generated random admin path:', randomPath);
+}
+
+// 安全检查：提醒用户修改默认密码
+if (config.admin.password === 'CHANGE_ME_PLEASE' || config.admin.password === '@admin123') {
+    console.warn('⚠️  [Security Warning] Default password detected!');
+    console.warn('⚠️  Please change the password in config.json immediately!');
+    console.warn('⚠️  You can set environment variable ADMIN_PASSWORD to override.');
+}
+
+// 支持环境变量覆盖敏感配置
+if (process.env.ADMIN_USERNAME) {
+    config.admin.username = process.env.ADMIN_USERNAME;
+}
+if (process.env.ADMIN_PASSWORD) {
+    config.admin.password = process.env.ADMIN_PASSWORD;
+}
+if (process.env.ADMIN_PATH) {
+    config.admin.path = process.env.ADMIN_PATH;
+}
+
 const PORT = config.server.port || 3000;
 const MAX_FILE_SIZE = config.server.maxFileSize || 10 * 1024 * 1024 * 1024;
 
