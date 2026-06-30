@@ -37,6 +37,8 @@
                     el.placeholder = text;
                 } else if (el.tagName === 'TITLE') {
                     el.textContent = text;
+                } else if (el.hasAttribute('data-i18n-html')) {
+                    el.innerHTML = text;
                 } else {
                     el.textContent = text;
                 }
