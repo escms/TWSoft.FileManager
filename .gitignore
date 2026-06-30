@@ -1,53 +1,32 @@
-# 依赖
 node_modules/
-
-# 上传文件
 uploads/
-
-# 数据库文件
 *.db
 *.sqlite
 *.sqlite3
-
-# 元数据备份
 metadata.json.bak
-
-# 日志
 *.log
 logs/
-
-# 系统文件
 .DS_Store
 Thumbs.db
 desktop.ini
-
-# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-
-# 环境变量
 .env
 .env.local
-
-# 测试覆盖率
 coverage/
 .nyc_output/
-
-# 临时文件
 nul
 *.tmp
 *.temp
-
-# 发布包（不在版本控制中）
 dist/
-
-# 测试文件
 test_*.txt
-测试文件.txt
-
-# 启动脚本（如果与项目无关）
 start.bat
 start.sh
+upload_resp.txt
+README_debug.html
+README.pdf
+public/index2.html
+计划.md

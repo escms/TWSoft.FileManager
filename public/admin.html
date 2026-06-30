@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文件管理后台</title>
+    <script src="/js/i18n.js"></script>
     <style>
         * {
             margin: 0;
@@ -47,7 +48,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1260px;
             margin: 30px auto;
             padding: 0 20px;
         }
@@ -85,6 +86,32 @@
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             overflow: hidden;
+        }
+        .batch-block {
+            margin-bottom: 24px;
+            border-bottom: 1px solid #f0f2ff;
+            padding-bottom: 20px;
+        }
+        .batch-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px 12px;
+            border-bottom: 1px solid #f0f2ff;
+        }
+        .batch-title {
+            color: #333;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .batch-meta {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .batch-actions {
+            display: flex;
+            gap: 10px;
         }
 
         .file-list-header {
@@ -263,33 +290,92 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 20px;
         }
+        .lang-switcher-wrap select {
+            padding: 4px 8px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            cursor: pointer;
+        }
+        .lang-switcher-wrap select option {
+            color: #333;
+            background: #fff;
+        }
+        .btn-preview {
+            background: #667eea;
+            color: white;
+        }
+        .btn-preview:hover {
+            background: #5568d3;
+        }
+        .preview-overlay {
+            position: fixed; top:0; left:0; right:0; bottom:0;
+            background: rgba(0,0,0,0.7); z-index:1000;
+            display:flex; align-items:center; justify-content:center;
+            padding:20px;
+        }
+        .preview-overlay .preview-box {
+            background:#fff; border-radius:12px;
+            max-width:90vw; max-height:90vh;
+            overflow:auto; position:relative;
+            box-shadow:0 20px 60px rgba(0,0,0,0.4);
+        }
+        .preview-overlay .preview-close {
+            position:absolute; top:8px; right:12px;
+            font-size:1.5rem; cursor:pointer; color:#666;
+            background:none; border:none; line-height:1;
+            z-index:10;
+        }
+        .preview-overlay .preview-close:hover { color:#000; }
+        .preview-overlay .preview-text {
+            padding:20px; white-space:pre-wrap; word-break:break-all;
+            font-family: 'Consolas','Courier New',monospace; font-size:0.9rem;
+            max-height:80vh; overflow:auto; color:#333;
+        }
+        .preview-overlay .preview-unsupported {
+            padding:60px 40px; text-align:center; color:#999;
+        }
+        .preview-overlay iframe, .preview-overlay video, .preview-overlay img {
+            max-width:100%; max-height:85vh; display:block;
+        }
     </style>
 </head>
 <body>
+    <div class="preview-overlay" id="previewOverlay" style="display:none">
+        <div class="preview-box">
+            <button class="preview-close" onclick="closePreview()">✕</button>
+            <div id="previewContent"></div>
+        </div>
+    </div>
     <div class="header">
-        <h1>文件管理后台</h1>
-        <button class="logout-btn" onclick="handleLogout()">退出登录</button>
+        <h1 data-i18n="admin.title">文件管理后台</h1>
+        <div style="display:flex;align-items:center;gap:12px">
+            <span class="lang-switcher-wrap"></span>
+            <button class="logout-btn" data-i18n="nav.logout" onclick="handleLogout()">退出登录</button>
+        </div>
     </div>
 
     <div class="container">
         <div class="stats">
             <div class="stat-card">
-                <h3>文件总数</h3>
+                <h3 data-i18n="admin.stats.total_files">文件总数</h3>
                 <div class="value" id="totalFiles">0</div>
             </div>
             <div class="stat-card">
-                <h3>总大小</h3>
+                <h3 data-i18n="admin.stats.total_size">总大小</h3>
                 <div class="value" id="totalSize">0 MB</div>
             </div>
             <div class="stat-card">
-                <h3>总下载次数</h3>
+                <h3 data-i18n="admin.stats.total_downloads">总下载次数</h3>
                 <div class="value" id="totalDownloads">0</div>
             </div>
         </div>
 
         <div class="file-list">
             <div class="file-list-header">
-                <h2>已上传文件</h2>
+                <h2 data-i18n="admin.file_list">已上传文件</h2>
                 <button class="refresh-btn" onclick="loadFiles()">刷新</button>
             </div>
 
@@ -307,12 +393,28 @@
     <script>
         let files = [];
 
+        (async function() {
+            try {
+                await i18n.init();
+                const wrap = document.querySelector('.lang-switcher-wrap');
+                if (wrap) i18n.initLangSwitcher(wrap);
+            } catch(e) {}
+            loadFiles();
+        })();
+
+        addEventListener('langchange', function() {
+            if (files.length > 0) {
+                updateStats();
+                renderFileList();
+            }
+        });
+
         async function loadFiles() {
             const contentDiv = document.getElementById('fileListContent');
             contentDiv.innerHTML = `
                 <div class="loading">
                     <div class="spinner"></div>
-                    <p>加载中...</p>
+                    <p>` + i18n.t('admin.loading') + `</p>
                 </div>
             `;
 
@@ -323,7 +425,7 @@
                 updateStats();
                 renderFileList();
             } catch (error) {
-                contentDiv.innerHTML = '<div class="empty-state"><p>加载失败：' + error.message + '</p></div>';
+                contentDiv.innerHTML = '<div class="empty-state"><p>' + i18n.t('admin.load_failed') + ': ' + error.message + '</p></div>';
             }
         }
 
@@ -381,50 +483,87 @@
                         <svg viewBox="0 0 24 24" fill="currentColor">
                             <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
                         </svg>
-                        <p>暂无文件</p>
+                        <p>` + i18n.t('admin.no_files') + `</p>
                     </div>
                 `;
                 return;
             }
 
-            let html = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>文件名</th>
-                            <th>大小</th>
-                            <th>上传时间</th>
-                            <th>上传IP</th>
-                            <th>下载次数</th>
-                            <th>最后下载</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
+            const batches = {};
             files.forEach(file => {
-                const lastDownloadText = file.lastDownload ? formatRelativeTime(file.lastDownload) : '从未';
+                const batchId = file.batchId || 'unknown';
+                if (!batches[batchId]) batches[batchId] = [];
+                batches[batchId].push(file);
+            });
+
+            const batchEntries = Object.keys(batches).map(batchId => {
+                const batchFiles = batches[batchId];
+                const batchSize = batchFiles.reduce((sum, f) => sum + f.size, 0);
+                const latestUpload = batchFiles.reduce((latest, f) => latest > f.uploadTime ? latest : f.uploadTime, batchFiles[0].uploadTime);
+                const batchShortId = batchFiles[0]?.batchShortId || batchId;
+                return { batchId, batchFiles, batchSize, latestUpload, batchShortId };
+            });
+
+            batchEntries.sort((a, b) => new Date(b.latestUpload) - new Date(a.latestUpload));
+
+            let html = '';
+            batchEntries.forEach(({ batchId, batchFiles, batchSize, batchShortId }) => {
                 html += `
-                    <tr>
-                        <td class="file-name" title="${escapeHtml(file.originalName)}">${escapeHtml(file.originalName)}</td>
-                        <td class="file-size">${formatFileSize(file.size)}</td>
-                        <td class="upload-time">${formatDate(file.uploadTime)}</td>
-                        <td class="upload-ip">${escapeHtml(file.uploadIP)}</td>
-                        <td class="download-count">${file.downloadCount || 0}</td>
-                        <td class="last-download">${lastDownloadText}</td>
-                        <td>
-                            <div class="actions">
-                                <a href="${file.downloadUrl}" class="btn btn-download" target="_blank">下载</a>
-                                <button class="btn btn-copy" onclick="copyLink('${file.downloadUrl}')">复制链接</button>
-                                <button class="btn btn-delete" onclick="deleteFile('${file.id}')">删除</button>
+                    <div class="batch-block">
+                        <div class="batch-header">
+                            <div>
+                                <div class="batch-title">${i18n.t('admin.batch')}：${escapeHtml(batchId)}</div>
+                                <div class="batch-meta">${i18n.t('admin.files_count', {count: batchFiles.length})} · ${formatFileSize(batchSize)}</div>
                             </div>
-                        </td>
-                    </tr>
+                            <div class="batch-actions">
+                                <a class="btn btn-download" href="/v/${batchShortId}" target="_blank">${i18n.t('admin.btn_view_batch')}</a>
+                                <button class="btn btn-delete" onclick="deleteBatch('${batchShortId}', '${escapeHtml(batchId)}')">${i18n.t('admin.btn_delete_batch')}</button>
+                            </div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>` + i18n.t('admin.th_path') + `</th>
+                                    <th>` + i18n.t('admin.th_size') + `</th>
+                                    <th>` + i18n.t('admin.th_upload_time') + `</th>
+                                    <th>` + i18n.t('admin.th_upload_ip') + `</th>
+                                    <th>` + i18n.t('admin.th_downloads') + `</th>
+                                    <th>` + i18n.t('admin.th_last_download') + `</th>
+                                    <th>` + i18n.t('admin.th_actions') + `</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                batchFiles.forEach(file => {
+                    const lastDownloadText = file.lastDownload ? formatRelativeTime(file.lastDownload) : i18n.t('admin.last_download_never');
+                    html += `
+                        <tr>
+                            <td class="file-name" title="${escapeHtml(file.relativePath || file.originalName)}">${escapeHtml(file.relativePath || file.originalName)}</td>
+                            <td class="file-size">${formatFileSize(file.size)}</td>
+                            <td class="upload-time">${formatDate(file.uploadTime)}</td>
+                            <td class="upload-ip">${escapeHtml(file.uploadIP)}</td>
+                            <td class="download-count">${file.downloadCount || 0}</td>
+                            <td class="last-download">${lastDownloadText}</td>
+                            <td>
+                                <div class="actions">
+                                    <a href="${file.downloadUrl}" class="btn btn-download" target="_blank">` + i18n.t('admin.btn_download') + `</a>
+                                    <button class="btn btn-copy" onclick="copyLink('${file.downloadUrl}')">` + i18n.t('admin.btn_copy') + `</button>
+                                    ` + (i18n.isPreviewSupported(file.originalName) ? `<button class="btn btn-preview" onclick="openPreview('${file.id}')">` + i18n.t('admin.btn_preview') + `</button>` : ``) + `
+                                    <button class="btn btn-delete" onclick="deleteFile('${file.id}')">` + i18n.t('admin.btn_delete') + `</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
                 `;
             });
 
-            html += '</tbody></table>';
             contentDiv.innerHTML = html;
         }
 
@@ -434,18 +573,69 @@
             return div.innerHTML;
         }
 
+        async function openPreview(fileId) {
+            const overlay = document.getElementById('previewOverlay');
+            const content = document.getElementById('previewContent');
+            overlay.style.display = 'flex';
+            content.innerHTML = '<div class="preview-text">' + i18n.t('admin.loading') + '</div>';
+
+            try {
+                const resp = await fetch('/api/preview-token/' + fileId);
+                const data = await resp.json();
+                if (!data.supported) {
+                    content.innerHTML = '<div class="preview-unsupported"><p>' + i18n.t('preview.unsupported') + '</p><p>' + i18n.t('preview.download_hint') + '</p></div>';
+                    return;
+                }
+                renderPreview(content, data);
+            } catch(e) {
+                content.innerHTML = '<div class="preview-text">' + e.message + '</div>';
+            }
+        }
+
+        function renderPreview(container, data) {
+            const fullUrl = window.location.origin + data.url;
+            if (data.previewType === 'image') {
+                container.innerHTML = '<img src="' + fullUrl + '" alt="' + data.fileName + '">';
+            } else if (data.previewType === 'pdf') {
+                container.innerHTML = '<iframe src="' + fullUrl + '" style="width:90vw;height:85vh" frameborder="0"></iframe>';
+            } else if (data.previewType === 'video') {
+                container.innerHTML = '<video src="' + fullUrl + '" controls style="max-width:100%;max-height:85vh"></video>';
+            } else if (data.previewType === 'audio') {
+                container.innerHTML = '<audio src="' + fullUrl + '" controls style="width:80%"></audio>';
+            } else if (data.previewType === 'text') {
+                fetch(fullUrl).then(r=>r.text()).then(text => {
+                    container.innerHTML = '<div class="preview-text">' + escapeHtml(text) + '</div>';
+                });
+            } else {
+                container.innerHTML = '<div class="preview-unsupported"><p>' + i18n.t('preview.unsupported') + '</p></div>';
+            }
+        }
+
+        function closePreview() {
+            document.getElementById('previewOverlay').style.display = 'none';
+            document.getElementById('previewContent').innerHTML = '';
+        }
+
+        document.getElementById('previewOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closePreview();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closePreview();
+        });
+
         async function copyLink(url) {
             const fullUrl = window.location.origin + url;
             try {
                 await navigator.clipboard.writeText(fullUrl);
-                alert('链接已复制到剪贴板！');
+                alert(i18n.t('upload.copied'));
             } catch (err) {
                 prompt('请手动复制链接：', fullUrl);
             }
         }
 
         async function deleteFile(fileId) {
-            if (!confirm('确定要删除这个文件吗？此操作不可恢复。')) {
+            if (!confirm(i18n.t('admin.delete_confirm'))) {
                 return;
             }
 
@@ -467,8 +657,31 @@
             }
         }
 
+        async function deleteBatch(batchShortId, batchId) {
+            if (!confirm(i18n.t('admin.delete_batch_confirm', {id: batchId}))) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/batch/${batchShortId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    loadFiles();
+                } else {
+                    alert('删除失败：' + result.error);
+                }
+            } catch (error) {
+                alert('删除失败：' + error.message);
+            }
+        }
+
         async function handleLogout() {
-            if (!confirm('确定要退出登录吗？')) {
+            if (!confirm(i18n.t('admin.logout_confirm'))) {
                 return;
             }
 
@@ -483,8 +696,7 @@
             }
         }
 
-        // 页面加载时获取文件列表
-        loadFiles();
+        // 页面加载时获取文件列表（已移动到上方的 init 中）
     </script>
 </body>
 </html>

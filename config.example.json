@@ -10,11 +10,15 @@
   },
   "download": {
     "shortPath": true,
-    "prefix": "/d"
+    "prefix": "/v"
   },
   "cleanup": {
     "enabled": true,
     "days": 15,
     "interval": 3600000
+  },
+  "i18n": {
+    "defaultLang": "zh-CN",
+    "supportedLangs": ["zh-CN", "en"]
   }
 }

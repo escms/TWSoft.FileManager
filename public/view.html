@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>查看上传文件</title>
+    <script src="/js/i18n.js"></script>
+    <style>
+        body { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding: 24px; background: linear-gradient(180deg,#eef2ff,#f6f8fb); }
+        .wrap { max-width:980px; margin:24px auto; background:#fff; padding:20px; border-radius:12px; box-shadow:0 10px 30px rgba(102,126,234,0.08); }
+        h1 { font-size:1.6rem; margin:0 0 8px 0; color:#222 }
+        #batchInfo { color:#666; margin-bottom:8px }
+        .file-list { margin-top:12px; border-top:1px solid #f0f2ff; }
+        .file-item { display:flex; align-items:center; padding:12px 8px; border-bottom:1px dashed #f0f2ff; }
+        .file-item:last-child { border-bottom: none; }
+        .file-item.folder { font-weight: 700; color:#333; padding-left:0; }
+        .file-item.folder + .file-item { margin-left:16px; }
+        .file-name { flex:1; margin-left:12px; word-break:break-all; color:#333 }
+        .meta { color:#888; font-size:0.9rem; margin-left:8px }
+        .actions { margin-left:12px }
+        button { padding:8px 12px; border-radius:8px; border:0; cursor:pointer; font-weight:600 }
+        .btn-primary { background:linear-gradient(90deg,#667eea,#764ba2); color:#fff }
+        .btn-ghost { background:#fff; border:1px solid #eef2ff; color:#444 }
+        a.btn-ghost { text-decoration:none; display:inline-block; padding:8px 10px; border-radius:8px; background:#fff; border:1px solid #eef2ff; color:#444 }
+        .controls { display:flex; gap:10px; margin-top:16px }
+        .lang-switcher-wrap {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 100;
+        }
+        .lang-switcher-wrap select {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            background: #fff;
+            cursor: pointer;
+            color: #333;
+        }
+        /* Preview modal */
+        .preview-overlay {
+            position: fixed; top:0; left:0; right:0; bottom:0;
+            background: rgba(0,0,0,0.7); z-index:1000;
+            display:flex; align-items:center; justify-content:center;
+            padding:20px;
+        }
+        .preview-overlay .preview-box {
+            background:#fff; border-radius:12px;
+            max-width:90vw; max-height:90vh;
+            overflow:auto; position:relative;
+            box-shadow:0 20px 60px rgba(0,0,0,0.4);
+        }
+        .preview-overlay .preview-close {
+            position:absolute; top:8px; right:12px;
+            font-size:1.5rem; cursor:pointer; color:#666;
+            background:none; border:none; line-height:1;
+            z-index:10;
+        }
+        .preview-overlay .preview-close:hover { color:#000; }
+        .preview-overlay .preview-text {
+            padding:20px; white-space:pre-wrap; word-break:break-all;
+            font-family: 'Consolas','Courier New',monospace; font-size:0.9rem;
+            max-height:80vh; overflow:auto; color:#333;
+        }
+        .preview-overlay .preview-unsupported {
+            padding:60px 40px; text-align:center; color:#999;
+        }
+        .preview-overlay .preview-unsupported p { margin:10px 0; }
+        .preview-overlay iframe, .preview-overlay video, .preview-overlay img {
+            max-width:100%; max-height:85vh; display:block;
+        }
+        .preview-btn {
+            padding:6px 10px; border-radius:6px; border:1px solid #eef2ff;
+            background:#fff; color:#667eea; cursor:pointer;
+            font-size:0.85rem; text-decoration:none;
+        }
+        .preview-btn:hover { background:#f0f2ff; }
+    </style>
+</head>
+<body>
+    <div class="lang-switcher-wrap"></div>
+    <div class="preview-overlay" id="previewOverlay" style="display:none">
+        <div class="preview-box">
+            <button class="preview-close" onclick="closePreview()">✕</button>
+            <div id="previewContent"></div>
+        </div>
+    </div>
+    <div class="wrap">
+        <h1 data-i18n="view.title">上传批次文件列表</h1>
+        <div id="batchInfo">加载中…</div>
+        <div class="file-list" id="fileList"></div>
+
+        <div style="margin-top:16px">
+            <button id="downloadSelected" class="btn-primary" data-i18n="view.download_selected">下载所选（ZIP）</button>
+            <button id="downloadAll" class="btn-ghost" data-i18n="view.download_all">下载全部（ZIP）</button>
+        </div>
+    </div>
+
+    <script>
+        const batchShortId = location.pathname.split('/').pop();
+        const fileListEl = document.getElementById('fileList');
+        const batchInfo = document.getElementById('batchInfo');
+
+        function fmtSize(n){ if(!n) return '-'; if(n<1024) return n+' B'; if(n<1024*1024) return (n/1024).toFixed(1)+' KB'; if(n<1024*1024*1024) return (n/1024/1024).toFixed(1)+' MB'; return (n/1024/1024/1024).toFixed(2)+' GB'; }
+
+        (async function init(){
+            try {
+                await i18n.init();
+                const wrap = document.querySelector('.lang-switcher-wrap');
+                if (wrap) i18n.initLangSwitcher(wrap);
+            } catch(e) {}
+            loadFiles();
+        })();
+
+        addEventListener('langchange', function() {
+            loadFiles();
+        });
+
+        async function loadFiles() {
+            try {
+                const resp = await fetch('/api/batch/'+batchShortId);
+                const files = await resp.json();
+                if(!files || files.length===0){ batchInfo.textContent=i18n.t('view.no_files'); return; }
+                batchInfo.textContent = i18n.t('view.files_count', {count: files.length});
+                const tree = buildTree(files);
+                renderTree(tree);
+            } catch(e){ batchInfo.textContent=i18n.t('view.load_failed'); console.error(e); }
+        }
+
+        function buildTree(files) {
+            const root = { name: '', children: {}, files: [] };
+            files.forEach(f=>{
+                const path = (f.relativePath || f.originalName).split('/');
+                let node = root;
+                for (let i = 0; i < path.length - 1; i++) {
+                    const part = path[i];
+                    if (!node.children[part]) {
+                        node.children[part] = { name: part, children: {}, files: [] };
+                    }
+                    node = node.children[part];
+                }
+                node.files.push(f);
+            });
+            return root;
+        }
+
+        function renderTree(node, parentEl) {
+            const container = parentEl || fileListEl;
+            let currentContainer = container;
+
+            if (node.name) {
+                const folderEl = document.createElement('div');
+                folderEl.className = 'file-item folder';
+                folderEl.textContent = node.name + '/';
+                container.appendChild(folderEl);
+
+                currentContainer = document.createElement('div');
+                currentContainer.style.paddingLeft = '20px';
+                container.appendChild(currentContainer);
+            }
+
+            Object.values(node.children).forEach(child => {
+                renderTree(child, currentContainer);
+            });
+
+            node.files.forEach(f=>{
+                const row = document.createElement('div'); row.className='file-item';
+                const cb = document.createElement('input'); cb.type='checkbox'; cb.value=f.id; cb.checked=true;
+                const name = document.createElement('div'); name.className='file-name'; name.textContent = f.originalName + ' (' + fmtSize(f.size) + ')';
+                const actions = document.createElement('div'); actions.className='actions';
+                const link = document.createElement('a'); link.href = f.downloadUrl; link.textContent=i18n.t('view.download'); link.className='btn-ghost'; link.style.marginRight='4px'; link.target='_blank';
+                actions.appendChild(link);
+                if (i18n.isPreviewSupported(f.originalName)) {
+                    const previewBtn = document.createElement('button'); previewBtn.textContent=i18n.t('view.preview'); previewBtn.className='preview-btn'; previewBtn.style.marginRight='4px';
+                    previewBtn.onclick = function(){ openPreview(f); };
+                    actions.appendChild(previewBtn);
+                }
+                row.appendChild(cb); row.appendChild(name); row.appendChild(actions);
+                currentContainer.appendChild(row);
+            });
+        }
+
+        function collectIds(){ return Array.from(fileListEl.querySelectorAll('input[type="checkbox"]')).filter(i=>i.checked).map(i=>i.value); }
+
+        document.getElementById('downloadSelected').addEventListener('click', ()=>{
+            const ids = collectIds(); if(ids.length===0){ alert(i18n.t('view.select_hint')); return; }
+            fetch('/download-zip', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ ids }) })
+            .then(res=>res.blob())
+            .then(blob=>{
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = `batch_${batchShortId}.zip`; document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(()=>URL.revokeObjectURL(url), 10000);
+            }).catch(err=>{ alert(i18n.t('view.download_zip_failed')); console.error(err); });
+        });
+
+        document.getElementById('downloadAll').addEventListener('click', ()=>{
+            const ids = Array.from(fileListEl.querySelectorAll('input[type="checkbox"]')).map(i=>i.value);
+            fetch('/download-zip', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ ids }) })
+            .then(res=>res.blob())
+            .then(blob=>{
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = `batch_${batchShortId}.zip`; document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(()=>URL.revokeObjectURL(url), 10000);
+            }).catch(err=>{ alert(i18n.t('view.download_zip_failed')); console.error(err); });
+        });
+
+        // Preview functions
+        async function openPreview(file) {
+            const overlay = document.getElementById('previewOverlay');
+            const content = document.getElementById('previewContent');
+            overlay.style.display = 'flex';
+            content.innerHTML = '<div class="preview-text">加载中...</div>';
+
+            try {
+                const resp = await fetch('/api/preview-token/' + file.id);
+                const data = await resp.json();
+                if (!data.supported) {
+                    content.innerHTML = '<div class="preview-unsupported"><p>' + i18n.t('preview.unsupported') + '</p><p>' + i18n.t('preview.download_hint') + '</p></div>';
+                    return;
+                }
+                renderPreview(content, data);
+            } catch(e) {
+                content.innerHTML = '<div class="preview-text">' + e.message + '</div>';
+            }
+        }
+
+        function renderPreview(container, data) {
+            const fullUrl = window.location.origin + data.url;
+            if (data.previewType === 'image') {
+                container.innerHTML = '<img src="' + fullUrl + '" alt="' + data.fileName + '">';
+            } else if (data.previewType === 'pdf') {
+                container.innerHTML = '<iframe src="' + fullUrl + '" style="width:90vw;height:85vh" frameborder="0"></iframe>';
+            } else if (data.previewType === 'video') {
+                container.innerHTML = '<video src="' + fullUrl + '" controls style="max-width:100%;max-height:85vh"></video>';
+            } else if (data.previewType === 'audio') {
+                container.innerHTML = '<audio src="' + fullUrl + '" controls style="width:80%"></audio>';
+            } else if (data.previewType === 'text') {
+                fetch(fullUrl).then(r=>r.text()).then(text => {
+                    container.innerHTML = '<div class="preview-text">' + escapeHtml(text) + '</div>';
+                });
+            } else {
+                container.innerHTML = '<div class="preview-unsupported"><p>' + i18n.t('preview.unsupported') + '</p></div>';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function closePreview() {
+            document.getElementById('previewOverlay').style.display = 'none';
+            document.getElementById('previewContent').innerHTML = '';
+        }
+
+        document.getElementById('previewOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closePreview();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closePreview();
+        });
+    </script>
+</body>
+</html>

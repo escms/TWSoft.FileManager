@@ -2,7 +2,7 @@
   "admin": {
     "username": "admin",
     "password": "CHANGE_ME_PLEASE",
-    "path": "/admin-panel"
+    "path": "/ack31sfyky"
   },
   "server": {
     "port": 3000,
@@ -10,11 +10,15 @@
   },
   "download": {
     "shortPath": true,
-    "prefix": "/d"
+    "prefix": "/v"
   },
   "cleanup": {
     "enabled": true,
     "days": 15,
     "interval": 3600000
+  },
+  "i18n": {
+    "defaultLang": "zh-CN",
+    "supportedLangs": ["zh-CN", "en"]
   }
 }

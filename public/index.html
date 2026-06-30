@@ -3,188 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文件迅传</title>
+    <title data-i18n="app.name">翼帆软件自用网盘</title>
+    <script src="/js/i18n.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
+        .container { text-align: center; padding: 40px; }
+        h1 { color: white; font-size: 2.5rem; margin-bottom: 40px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
 
-        .container {
-            text-align: center;
-            padding: 40px;
+        .upload-area { background: white; border-radius: 20px; padding: 60px 80px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); transition: transform 0.3s ease, border-color 0.2s ease, background-color 0.2s ease; position: relative; border: 2px dashed transparent; }
+        .upload-area:hover { transform: translateY(-5px); }
+        .upload-area.drag-over { background: #f7f8ff; border-color: #667eea; }
+
+        .upload-hint { margin-top: 20px; color: #555; font-size: 0.95rem; line-height: 1.6; letter-spacing: 0.02em; }
+
+        .upload-btn { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color: white; border: none; padding: 20px 60px; font-size:1.2rem; border-radius:50px; cursor:pointer; transition: all 0.3s ease; box-shadow:0 10px 30px rgba(102,126,234,0.4); }
+        .upload-btn.dragged { opacity: 0.5; }
+        .upload-btn:hover { transform: scale(1.05); box-shadow: 0 15px 40px rgba(102,126,234,0.5); }
+        .upload-btn:active { transform: scale(0.98); }
+
+        #fileInputFiles { display: none; }
+
+        .legal-notice { margin-top:40px; color: rgba(255,255,255,0.9); font-size:0.9rem; max-width:700px; line-height:1.8; text-align:left; }
+        .legal-notice strong { display:block; margin-bottom:10px; font-size:1rem; }
+
+        .result { margin-top:30px; padding:20px; background:white; border-radius:10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display:none; }
+        .result.show { display:block; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from{ opacity:0; transform:translateY(-20px); } to{ opacity:1; transform:translateY(0);} }
+        .result p { color:#333; margin-bottom:15px; }
+
+        .download-link { display:inline-block; padding:12px 30px; background:#4CAF50; color:white; text-decoration:none; border-radius:25px; transition:all 0.3s ease; }
+        .download-link:hover { background:#45a049; transform:scale(1.05); }
+
+        .copy-btn { margin-left:10px; padding:12px 20px; background:#2196F3; color:white; border:none; border-radius:25px; cursor:pointer; transition:all 0.3s ease; }
+        .copy-btn:hover{ background:#1976D2 }
+        .copy-btn.copied{ background:#4CAF50 }
+
+        .progress-bar { width:100%; height:6px; background:#f0f0f0; border-radius:3px; overflow:hidden; margin-top:20px; display:none }
+        .progress-bar.show { display:block }
+        .progress-fill { height:100%; background: linear-gradient(90deg,#667eea 0%,#764ba2 100%); width:0%; transition: width 0.3s ease }
+
+        .error { color:#ff4444; margin-top:15px }
+        .lang-switcher-wrap {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
         }
-
-        h1 {
+        .lang-switcher-wrap select {
+            padding: 8px 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            background: rgba(255,255,255,0.15);
             color: white;
-            font-size: 2.5rem;
-            margin-bottom: 40px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        .upload-area {
-            background: white;
-            border-radius: 20px;
-            padding: 60px 80px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease;
-        }
-
-        .upload-area:hover {
-            transform: translateY(-5px);
-        }
-
-        .upload-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 20px 60px;
-            font-size: 1.2rem;
-            border-radius: 50px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            backdrop-filter: blur(4px);
         }
-
-        .upload-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5);
-        }
-
-        .upload-btn:active {
-            transform: scale(0.98);
-        }
-
-        #fileInput {
-            display: none;
-        }
-
-        .legal-notice {
-            margin-top: 40px;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 0.9rem;
-            max-width: 700px;
-            line-height: 1.8;
-            text-align: left;
-        }
-
-        .legal-notice strong {
-            display: block;
-            margin-bottom: 10px;
-            font-size: 1rem;
-        }
-
-        .result {
-            margin-top: 30px;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            display: none;
-        }
-
-        .result.show {
-            display: block;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .result p {
+        .lang-switcher-wrap select option {
             color: #333;
-            margin-bottom: 15px;
-        }
-
-        .download-link {
-            display: inline-block;
-            padding: 12px 30px;
-            background: #4CAF50;
-            color: white;
-            text-decoration: none;
-            border-radius: 25px;
-            transition: all 0.3s ease;
-        }
-
-        .download-link:hover {
-            background: #45a049;
-            transform: scale(1.05);
-        }
-
-        .copy-btn {
-            margin-left: 10px;
-            padding: 12px 20px;
-            background: #2196F3;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .copy-btn:hover {
-            background: #1976D2;
-        }
-
-        .copy-btn.copied {
-            background: #4CAF50;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background: #f0f0f0;
-            border-radius: 3px;
-            overflow: hidden;
-            margin-top: 20px;
-            display: none;
-        }
-
-        .progress-bar.show {
-            display: block;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .error {
-            color: #ff4444;
-            margin-top: 15px;
+            background: #fff;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>文件迅传</h1>
+        <div class="lang-switcher-wrap"></div>
+        <h1 data-i18n="app.name">翼帆软件自用网盘</h1>
 
-        <div class="upload-area">
-            <input type="file" id="fileInput">
-            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-area" id="uploadArea">
+            <input type="file" id="fileInputFiles" multiple>
+            <button class="upload-btn" id="uploadFileBtn" type="button" onclick="document.getElementById('fileInputFiles').click()" data-i18n="upload.btn">
                 上传文件
             </button>
+            <div class="upload-hint" data-i18n="upload.hint">拖拽文件或文件夹到此处，或点击按钮上传</div>
 
             <div class="progress-bar" id="progressBar">
                 <div class="progress-fill" id="progressFill"></div>
@@ -192,28 +88,30 @@
         </div>
 
         <div class="result" id="result">
-            <p>文件上传成功！下载链接：</p>
+            <p data-i18n="upload.success">文件上传成功！下载链接：</p>
             <div>
-                <a href="#" class="download-link" id="downloadLink" target="_blank">下载文件</a>
-                <button class="copy-btn" id="copyBtn" onclick="copyLink()">复制链接</button>
+                <a href="#" class="download-link" id="downloadLink" target="_blank" data-i18n="upload.view">下载文件</a>
+                <button class="copy-btn" id="copyBtn" onclick="copyLink()" data-i18n="upload.copy">复制链接</button>
             </div>
         </div>
 
         <div class="legal-notice">
-            <strong>法律声明</strong>
-            请遵守《中华人民共和国网络安全法》及相关法律法规，严禁上传、存储、传播以下内容：
-            <br>• 危害国家安全、泄露国家秘密的内容
-            <br>• 暴力恐怖、淫秽色情内容
-            <br>• 侵犯他人知识产权的内容
-            <br>• 计算机病毒、木马等恶意程序
-            <br>• 其他法律法规禁止的内容
-            <br><br>
-            上传者需对上传内容承担法律责任，本平台仅提供技术服务。
+            <strong data-i18n="legal.title">法律声明</strong>
+            <p data-i18n="legal.content">请遵守《中华人民共和国网络安全法》及相关法律法规，严禁上传、存储、传播以下内容：
+<br>• 危害国家安全、泄露国家秘密的内容
+<br>• 暴力恐怖、淫秽色情内容
+<br>• 侵犯他人知识产权的内容
+<br>• 计算机病毒、木马等恶意程序
+<br>• 其他法律法规禁止的内容
+<br><br>
+上传者需对上传内容承担法律责任，本平台仅提供技术服务。</p>
         </div>
     </div>
 
     <script>
-        const fileInput = document.getElementById('fileInput');
+        const fileInputFiles = document.getElementById('fileInputFiles');
+        const uploadArea = document.getElementById('uploadArea');
+        const uploadFileBtn = document.getElementById('uploadFileBtn');
         const progressBar = document.getElementById('progressBar');
         const progressFill = document.getElementById('progressFill');
         const result = document.getElementById('result');
@@ -221,63 +119,225 @@
         const copyBtn = document.getElementById('copyBtn');
 
         let currentDownloadUrl = '';
+        let isUploading = false;
+        let lastDroppedFiles = null;
 
-        fileInput.addEventListener('change', function(e) {
+        (async function() {
+            try {
+                await i18n.init();
+                const wrap = document.querySelector('.lang-switcher-wrap');
+                if (wrap) i18n.initLangSwitcher(wrap);
+            } catch(e) {}
+        })();
+
+        fileInputFiles.addEventListener('change', function(e) {
             if (e.target.files.length > 0) {
-                uploadFile(e.target.files[0]);
+                uploadFiles(e.target.files);
             }
         });
 
-        async function uploadFile(file) {
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+            uploadFileBtn.classList.add('dragged');
+        });
+
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            uploadFileBtn.classList.remove('dragged');
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            uploadFileBtn.classList.remove('dragged');
+            const items = e.dataTransfer.items;
+            if (items && items.length > 0) {
+                readDroppedItems(items).then(files => {
+                    if (files.length > 0) {
+                        lastDroppedFiles = files;
+                        setFileInputFiles(files);
+                        uploadFiles(files);
+                    }
+                }).catch(err => {
+                    console.error('[Upload] readDroppedItems error', err);
+                    const files = Array.from(e.dataTransfer.files || []);
+                    if (files.length > 0) {
+                        lastDroppedFiles = files;
+                        setFileInputFiles(files);
+                        uploadFiles(files);
+                    }
+                });
+            } else {
+                const files = Array.from(e.dataTransfer.files || []);
+                if (files.length > 0) {
+                    lastDroppedFiles = files;
+                    setFileInputFiles(files);
+                    uploadFiles(files);
+                }
+            }
+        });
+
+        function setFileInputFiles(files) {
+            try {
+                const dt = new DataTransfer();
+                files.forEach(file => dt.items.add(file));
+                fileInputFiles.files = dt.files;
+            } catch (err) {
+                console.warn('[Upload] setFileInputFiles failed', err);
+            }
+        }
+
+        async function readDroppedItems(items) {
+            const files = [];
+
+            async function traverse(entry, pathPrefix) {
+                return new Promise((resolve) => {
+                    if (entry.isFile) {
+                        entry.file(file => {
+                            file.relativePath = pathPrefix + file.name;
+                            files.push(file);
+                            resolve();
+                        }, () => resolve());
+                    } else if (entry.isDirectory) {
+                        const dirReader = entry.createReader();
+                        const readEntries = () => {
+                            dirReader.readEntries(async results => {
+                                if (!results.length) {
+                                    resolve();
+                                    return;
+                                }
+                                await Promise.all(results.map(child => traverse(child, pathPrefix + entry.name + '/')));
+                                readEntries();
+                            }, () => resolve());
+                        };
+                        readEntries();
+                    } else {
+                        resolve();
+                    }
+                });
+            }
+
+            const promises = [];
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i].webkitGetAsEntry ? items[i].webkitGetAsEntry() : items[i].getAsEntry && items[i].getAsEntry();
+                if (item) {
+                    promises.push(traverse(item, ''));
+                }
+            }
+            await Promise.all(promises);
+            return files;
+        }
+
+        async function uploadFiles(fileList) {
+            // 支持 FileList 或数组
+            const files = Array.from(fileList);
+            lastDroppedFiles = files;
+
+            if (isUploading) {
+                showError(i18n.t('upload.uploading'));
+                return;
+            }
+            isUploading = true;
+            uploadFileBtn.disabled = true;
+            fileInputFiles.disabled = true;
+
             // 重置状态
             result.classList.remove('show');
             progressBar.classList.add('show');
             progressFill.style.width = '0%';
 
             const formData = new FormData();
-            formData.append('file', file);
+            for (let i = 0; i < files.length; i++) {
+                const f = files[i];
+                const relativePath = f.relativePath || f.webkitRelativePath || '';
+                const originalName = f.name;
+                console.log('[Upload] file:', originalName, 'relativePath=', relativePath);
+                formData.append(`relativePath[${i}]`, relativePath);
+                formData.append(`files[${i}]`, f, originalName);
+            }
 
             try {
-                const xhr = new XMLHttpRequest();
+                try {
+                    console.log('[Upload] Sending', files.length, 'entries');
+                    // 使用 fetch 提交 FormData，避免某些浏览器对 XHR multipart 请求的阻塞
+                    // 进度事件对 fetch 不支持，这里显示不定进度效果
+                    progressFill.style.width = '20%';
 
-                // 监听上传进度
-                xhr.upload.addEventListener('progress', function(e) {
-                    if (e.lengthComputable) {
-                        const percentComplete = (e.loaded / e.total) * 100;
-                        progressFill.style.width = percentComplete + '%';
+                    const resp = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!resp.ok) {
+                        const text = await resp.text();
+                        showError(i18n.t('upload.error') + '：' + resp.status + ' ' + resp.statusText + ' ' + text);
+                        return;
                     }
-                });
 
-                xhr.addEventListener('load', function() {
-                    if (xhr.status === 200) {
-                        const response = JSON.parse(xhr.responseText);
-                        showResult(response);
-                    } else {
-                        showError('上传失败：' + xhr.statusText);
+                    const response = await resp.json();
+                    progressFill.style.width = '100%';
+                    showResult(response);
+
+                } catch (error) {
+                    console.error('[Upload] Fetch error:', error);
+                    // 尝试回退到表单+iframe 提交，兼容某些浏览器/扩展阻止 fetch 的场景
+                    showError(i18n.t('upload.retry_fallback'));
+                    try {
+                        if (fileInputFiles.files.length === 0 && lastDroppedFiles) {
+                            setFileInputFiles(lastDroppedFiles);
+                        }
+                        await submitViaForm();
+                    } catch (err) {
+                        console.error('[Upload] Form fallback error:', err);
+                        showError(i18n.t('upload.network_error') + '：' + (err && err.message ? err.message : err));
                     }
-                });
-
-                xhr.addEventListener('error', function() {
-                    showError('网络错误，请重试');
-                });
-
-                xhr.open('POST', '/upload');
-                xhr.send(formData);
+                }
+                // 恢复状态
+                isUploading = false;
+                uploadFileBtn.disabled = false;
+                fileInputFiles.disabled = false;
 
             } catch (error) {
-                showError('上传失败：' + error.message);
+                showError(i18n.t('upload.error') + '：' + error.message);
             }
+        }
+
+        function makeAbsoluteUrl(url) {
+            if (!url) return '';
+            if (url.startsWith('http://') || url.startsWith('https://')) return url;
+            if (url.startsWith('/')) return window.location.origin + url;
+            return window.location.origin + '/' + url;
         }
 
         function showResult(data) {
             progressBar.classList.remove('show');
-            currentDownloadUrl = window.location.origin + data.downloadUrl;
-            downloadLink.href = currentDownloadUrl;
-            downloadLink.textContent = data.fileName;
+            // 支持单文件和批量返回
+            if (data && Array.isArray(data.files)) {
+                // 显示批次查看页链接
+                const viewUrl = data.viewUrl || (data.fullViewUrl ? data.fullViewUrl : null);
+                if (viewUrl) {
+                    currentDownloadUrl = makeAbsoluteUrl(viewUrl);
+                    downloadLink.href = currentDownloadUrl;
+                    downloadLink.textContent = i18n.t('upload.view');
+                    downloadLink.target = '_blank';
+                } else if (data.files.length > 0) {
+                    currentDownloadUrl = makeAbsoluteUrl(data.files[0].downloadUrl);
+                    downloadLink.href = currentDownloadUrl;
+                    downloadLink.textContent = data.files[0].fileName || i18n.t('upload.view');
+                    downloadLink.target = '_blank';
+                }
+            } else if (data && data.downloadUrl) {
+                currentDownloadUrl = makeAbsoluteUrl(data.downloadUrl);
+                downloadLink.href = currentDownloadUrl;
+                downloadLink.textContent = data.fileName || i18n.t('upload.view');
+                downloadLink.target = '_blank';
+            }
             result.classList.add('show');
 
             // 清空文件输入
-            fileInput.value = '';
+            fileInputFiles.value = '';
         }
 
         function showError(message) {
@@ -287,15 +347,113 @@
         }
 
         function copyLink() {
-            navigator.clipboard.writeText(currentDownloadUrl).then(function() {
-                copyBtn.textContent = '已复制！';
+            if (!currentDownloadUrl) {
+                alert(i18n.t('upload.no_file'));
+                return;
+            }
+
+            const copyText = function(text) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    return navigator.clipboard.writeText(text);
+                }
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.left = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                let success = false;
+                try {
+                    success = document.execCommand('copy');
+                } catch (err) {
+                    success = false;
+                }
+                document.body.removeChild(textarea);
+                return success ? Promise.resolve() : Promise.reject(new Error('复制失败'));
+            };
+
+            copyText(currentDownloadUrl).then(function() {
+                copyBtn.textContent = i18n.t('upload.copied');
                 copyBtn.classList.add('copied');
                 setTimeout(function() {
-                    copyBtn.textContent = '复制链接';
+                    copyBtn.textContent = i18n.t('upload.copy');
                     copyBtn.classList.remove('copied');
                 }, 2000);
             }).catch(function() {
-                alert('复制失败，请手动复制');
+                alert(i18n.t('upload.copy_failed') + currentDownloadUrl);
+            });
+        }
+
+        // 回退：通过隐藏表单和 iframe 提交文件（用于被浏览器/扩展拦截时）
+        async function submitViaForm() {
+            return new Promise((resolve, reject) => {
+                // 创建隐藏 iframe
+                let iframe = document.getElementById('uploadFrame');
+                if (!iframe) {
+                    iframe = document.createElement('iframe');
+                    iframe.style.display = 'none';
+                    iframe.id = 'uploadFrame';
+                    iframe.name = 'uploadFrame';
+                    document.body.appendChild(iframe);
+                }
+
+                // 创建表单并将 fileInputFiles 移入表单
+                const form = document.createElement('form');
+                form.style.display = 'none';
+                form.method = 'POST';
+                form.enctype = 'multipart/form-data';
+                form.action = '/upload';
+                form.target = 'uploadFrame';
+
+                const originalParent = fileInputFiles.parentNode;
+                const originalNext = fileInputFiles.nextSibling;
+
+                form.appendChild(fileInputFiles);
+                document.body.appendChild(form);
+
+                // 监听 iframe 加载完成来读取响应
+                const onLoad = () => {
+                    try {
+                        const doc = iframe.contentDocument || iframe.contentWindow.document;
+                        const text = doc.body ? doc.body.innerText : null;
+                        if (text) {
+                            try {
+                                const data = JSON.parse(text);
+                                showResult(data);
+                                cleanup();
+                                resolve(data);
+                                return;
+                            } catch (e) {
+                                // 解析失败
+                                reject(new Error(i18n.t('upload.fallback_error')));
+                            }
+                        } else {
+                            reject(new Error(i18n.t('upload.fallback_empty')));
+                        }
+                    } catch (e) {
+                        reject(e);
+                    }
+                };
+
+                const cleanup = () => {
+                    iframe.removeEventListener('load', onLoad);
+                    // 将 fileInputFiles 移回原来位置
+                    if (originalNext) originalParent.insertBefore(fileInputFiles, originalNext);
+                    else originalParent.appendChild(fileInputFiles);
+                    // 移除表单
+                    if (form.parentNode) form.parentNode.removeChild(form);
+                };
+
+                iframe.addEventListener('load', onLoad);
+
+                // 提交表单
+                try {
+                    form.submit();
+                } catch (e) {
+                    cleanup();
+                    reject(e);
+                }
             });
         }
     </script>

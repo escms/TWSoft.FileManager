@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理员登录</title>
+    <title data-i18n="login.title">管理员登录</title>
+    <script src="/js/i18n.js"></script>
     <style>
         * {
             margin: 0;
@@ -116,6 +117,33 @@
             75% { transform: translateX(10px); }
         }
 
+        .captcha-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .captcha-svg {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            display: block;
+            flex-shrink: 0;
+            height: 44px;
+            width: 130px;
+        }
+        .captcha-row input {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        .captcha-row input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
         .back-link {
             text-align: center;
             margin-top: 20px;
@@ -130,46 +158,88 @@
         .back-link a:hover {
             text-decoration: underline;
         }
+
+        .lang-switcher-wrap {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+        .lang-switcher-wrap select {
+            padding: 6px 12px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            cursor: pointer;
+        }
+        .lang-switcher-wrap select option {
+            color: #333;
+            background: #fff;
+        }
     </style>
 </head>
 <body>
+    <div class="lang-switcher-wrap"></div>
     <div class="login-container">
         <div class="login-header">
-            <h1>管理员登录</h1>
-            <p>请输入用户名和密码</p>
+            <h1 data-i18n="login.title">管理员登录</h1>
+            <p data-i18n="login.subtitle">请输入用户名和密码</p>
         </div>
 
         <div class="error-message" id="errorMessage"></div>
 
         <form id="loginForm" onsubmit="return handleLogin(event)">
             <div class="form-group">
-                <label for="username">用户名</label>
+                <label for="username" data-i18n="login.username">用户名</label>
                 <input type="text" id="username" name="username" required autocomplete="username">
             </div>
 
             <div class="form-group">
-                <label for="password">密码</label>
+                <label for="password" data-i18n="login.password">密码</label>
                 <input type="password" id="password" name="password" required autocomplete="current-password">
             </div>
 
-            <button type="submit" class="login-btn" id="loginBtn">登录</button>
+            <div class="form-group">
+                <label for="captcha" data-i18n="login.captcha">验证码</label>
+                <div class="captcha-row">
+                    <input type="text" id="captcha" name="captcha" required autocomplete="off" maxlength="4" placeholder="" data-i18n="login.captcha">
+                    <img class="captcha-svg" id="captchaImg" src="/api/captcha" alt="验证码" onclick="refreshCaptcha()" style="cursor:pointer">
+                </div>
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn" data-i18n="login.btn">登录</button>
         </form>
 
         <div class="back-link">
-            <a href="/">返回首页</a>
+            <a href="/" data-i18n="login.back_home">返回首页</a>
         </div>
     </div>
 
     <script>
+        function refreshCaptcha() {
+            const img = document.getElementById('captchaImg');
+            img.src = '/api/captcha?t=' + Date.now();
+        }
+
+        (async function() {
+            try {
+                await i18n.init();
+                const wrap = document.querySelector('.lang-switcher-wrap');
+                if (wrap) i18n.initLangSwitcher(wrap);
+            } catch(e) {}
+        })();
+
         async function handleLogin(event) {
             event.preventDefault();
 
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+            const captcha = document.getElementById('captcha').value;
             const loginBtn = document.getElementById('loginBtn');
             const errorMessage = document.getElementById('errorMessage');
 
-            // 禁用按钮
             loginBtn.disabled = true;
             loginBtn.textContent = '登录中...';
             errorMessage.classList.remove('show');
@@ -180,30 +250,32 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ username, password })
+                    body: JSON.stringify({ username, password, captcha })
                 });
 
                 const result = await response.json();
 
                 if (result.success) {
-                    // 登录成功，使用服务端返回的路径跳转
                     window.location.href = result.redirectPath || '/system-mgmt-2024';
                 } else {
-                    // 登录失败
-                    errorMessage.textContent = result.message || '登录失败，请检查用户名和密码';
+                    errorMessage.textContent = result.message || '登录失败';
                     errorMessage.classList.add('show');
                     loginBtn.disabled = false;
                     loginBtn.textContent = '登录';
+                    refreshCaptcha();
                 }
             } catch (error) {
                 errorMessage.textContent = '网络错误，请重试';
                 errorMessage.classList.add('show');
                 loginBtn.disabled = false;
                 loginBtn.textContent = '登录';
+                refreshCaptcha();
             }
 
             return false;
         }
+
+        refreshCaptcha();
     </script>
 </body>
 </html>
