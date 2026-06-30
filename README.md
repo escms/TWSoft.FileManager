@@ -21,6 +21,12 @@
 - **数据持久化**：使用SQLite数据库存储文件元数据
 - **中文编码兼容**：自动识别 GBK/UTF-8/Latin-1 编码
 
+## 截图
+
+<img width="1061" height="635" alt="ScreenShot_2026-06-30_153609_534" src="https://github.com/user-attachments/assets/b186d50c-bdf2-406b-9fe3-f0b632c2bbba" />
+<img width="1313" height="805" alt="ScreenShot_2026-06-30_151917_650" src="https://github.com/user-attachments/assets/fe01f43b-a207-426b-958a-27da91e6a0b1" />
+
+
 ## 技术栈
 
 - **后端框架**：Express.js 5.x
